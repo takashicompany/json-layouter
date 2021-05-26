@@ -45,6 +45,7 @@ DEFAULT_PARAMS = {
         'offset_x_mm': '0',  # -8.6725
         'offset_y_mm': '0',  # 8.59
         'flip': False,
+        'target_diodes': '',
     },
 }
 
@@ -54,7 +55,7 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
         self.name = 'Keyboard Layouter'
         self.category = 'Modify PCB'
         self.description = 'Move parts to the position specified by json'
-        self.__version__ = '0.1.1'
+        self.__version__ = '0.2.1'
 
     def Run(self):
         self.__gui()
@@ -166,6 +167,15 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                 sw.SetOrientationDegrees(r)
 
         if self.params['diode']['move']:
+            
+            targetStr = self.params['diode']['target_diodes']
+
+            if len(targetStr) > 0:
+                targets = targetStr.split()
+
+                if str(ref_id) not in targets:
+                    return
+
             diode = self.board.FindModule(self.__diode_ref(ref_id))
             if diode is not None:
                 diode.SetPosition(pcbnew.wxPointMM(x_mm, y_mm))
@@ -255,10 +265,12 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                     if params['diode']['move']:
                         textctrl_offset_x_mm.Enable()
                         textctrl_offset_y_mm.Enable()
+                        textctrl_target_diodes.Enable()
                         checkbox_flip.Enable()
                     else:
                         textctrl_offset_x_mm.Disable()
                         textctrl_offset_y_mm.Disable()
+                        textctrl_target_diodes.Disable()
                         checkbox_flip.Disable()
 
                 def textctrl_offset_x_mm_handler(_):
@@ -266,6 +278,9 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
 
                 def textctrl_offset_y_mm_handler(_):
                     params['diode']['offset_y_mm'] = textctrl_offset_y_mm.GetValue()
+
+                def textctrl_target_diodes_handler(_):
+                    params['diode']['target_diodes'] = textctrl_target_diodes.GetValue()
 
                 def checkbox_flip_handler(_):
                     params['diode']['flip'] = checkbox_flip.GetValue()
@@ -300,6 +315,19 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                 layout_offset_y_mm.Add(textctrl_offset_y_mm, flag=wx.ALIGN_CENTER | wx.LEFT, border=MARGIN_PIX)
                 panel_offset_y_mm.SetSizer(layout_offset_y_mm)
 
+                # target-diodes
+                panel_target_diodes = wx.Panel(self, wx.ID_ANY)
+                text_target_diodes = wx.StaticText(panel_target_diodes, wx.ID_ANY, 'Target diodes(separate by space):')
+                textctrl_target_diodes = wx.TextCtrl(panel_target_diodes, wx.ID_ANY)
+                set_initial_textctrl(textctrl_target_diodes,
+                                     params['diode']['move'],
+                                     params['diode']['target_diodes'])
+                textctrl_target_diodes.Bind(wx.EVT_TEXT, textctrl_target_diodes_handler)
+                layout_target_diodes = wx.BoxSizer(wx.HORIZONTAL)
+                layout_target_diodes.Add(text_target_diodes, flag=wx.ALIGN_CENTER)
+                layout_target_diodes.Add(textctrl_target_diodes, flag=wx.ALIGN_CENTER | wx.LEFT, border=MARGIN_PIX)
+                panel_target_diodes.SetSizer(layout_target_diodes)
+
                 checkbox_flip = wx.CheckBox(self, wx.ID_ANY, 'Flip')
                 set_initial_checkbox(checkbox_flip, False, params['diode']['move'])
                 checkbox_flip.Bind(wx.EVT_CHECKBOX, checkbox_flip_handler)
@@ -308,6 +336,7 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                 layout.Add(checkbox_move)
                 layout.Add(panel_offset_x_mm, flag=wx.LEFT, border=INDENT_PIX)
                 layout.Add(panel_offset_y_mm, flag=wx.LEFT, border=INDENT_PIX)
+                layout.Add(panel_target_diodes, flag=wx.LEFT, border=INDENT_PIX)
                 layout.Add(checkbox_flip, flag=wx.LEFT, border=INDENT_PIX)
                 self.SetSizer(layout)
 
@@ -345,6 +374,7 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                 p['json']['data'] = self.__load_json(p)
                 p['diode']['offset_x_mm'] = float(p['diode']['offset_x_mm'])
                 p['diode']['offset_y_mm'] = float(p['diode']['offset_y_mm'])
+                p['diode']['target_diodes'] = str(p['diode']['target_diodes'])
                 return p
 
             @staticmethod
