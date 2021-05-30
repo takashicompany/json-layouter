@@ -20,6 +20,7 @@ KEY_OFFSET = {
     '6.25': 50.006,  # 62.071
 }
 
+# Position From Left-Top to Origin(x = 2.54, y = 5.08) 
 KEY_ORIGIN = {
     ('1', '1'): (12.065, 4.445),
     ('1', '2'): (12.065, 13.97),
@@ -158,8 +159,13 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
 
         rx_mm = KEY_UNIT_SIZE_MM * rx - KEY_ORIGIN.get((w, h), (0, 0))[0] + KEY_OFFSET.get(w, 0)
         ry_mm = KEY_UNIT_SIZE_MM * ry - KEY_ORIGIN.get((w, h), (0, 0))[1] + KEY_OFFSET.get(h, 0)
+        
+        # TODO Fix KEY_ORIGIN and KEY_OFFSET
+        rx_mm += 2.54
+        ry_mm -= 5.08
+        
         x_mm, y_mm = self.__rotate(r, x_mm, y_mm, rx_mm, ry_mm)
-
+        
         if self.params['switch']['move']:
             sw = self.board.FindModule(self.__sw_ref(ref_id))
             if sw is not None:
@@ -413,4 +419,3 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
 
 
 KeyboardLayouter().register()
-
