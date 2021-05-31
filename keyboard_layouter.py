@@ -190,7 +190,7 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                                              self.params['diode']['offset_y_mm'])
                 diode.Move(pcbnew.wxPointMM(dx_mm, dy_mm))
 
-                if self.params['diode']['move']:
+                if self.params['diode']['flip']:
                     diode.Flip(diode.GetCenter())
                 diode.SetOrientationDegrees(r)
 
