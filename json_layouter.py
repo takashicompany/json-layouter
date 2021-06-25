@@ -53,7 +53,7 @@ DEFAULT_PARAMS = {
 
 class KeyboardLayouter(pcbnew.ActionPlugin):
     def defaults(self):
-        self.name = 'Keyboard Layouter'
+        self.name = 'Json Layouter'
         self.category = 'Modify PCB'
         self.description = 'Move parts to the position specified by json'
         self.__version__ = '0.2.1'
