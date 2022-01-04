@@ -40,6 +40,7 @@ DEFAULT_PARAMS = {
     },
     'switch': {
         'move': True,
+        'unit': KEY_UNIT_SIZE_MM
     },
     'diode': {
         'move': False,
@@ -251,6 +252,10 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
 
         class SwitchPanel(wx.Panel):
             def __init__(self, parent):
+                
+                def textctrl_unit_mm_handler(_):
+                    params['switch']['unit'] = textctrl_unit_mm.GetValue()
+
                 def checkbox_move_handler(_):
                     params['switch']['move'] = checkbox_move.GetValue()
 
@@ -260,8 +265,20 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                 set_initial_checkbox(checkbox_move, True, params['switch']['move'])
                 checkbox_move.Bind(wx.EVT_CHECKBOX, checkbox_move_handler)
 
+                panel_unit_mm = wx.Panel(self, wx.ID_ANY)
+                text_unit_mm = wx.StaticText(panel_unit_mm, wx.ID_ANY, 'Offset x[mm]:')
+                textctrl_unit_mm = wx.TextCtrl(panel_unit_mm, wx.ID_ANY)
+                set_initial_textctrl(textctrl_unit_mm, True, params['switch']['unit'])
+                textctrl_unit_mm.Bind(wx.EVT_TEXT, textctrl_unit_mm_handler)
+                layout_unit_mm = wx.BoxSizer(wx.HORIZONTAL)
+                layout_unit_mm.Add(text_unit_mm, flag=wx.ALIGN_CENTER)
+                layout_unit_mm.Add(textctrl_unit_mm, flag=wx.ALIGN_CENTER | wx.LEFT, border=MARGIN_PIX)
+                panel_unit_mm.SetSizer(layout_unit_mm)
+
                 layout = wx.BoxSizer(wx.HORIZONTAL)
                 layout.Add(checkbox_move)
+                layout.Add(panel_unit_mm, flag=wx.LEFT, border=INDENT_PIX)
+
                 self.SetSizer(layout)
 
         class DiodePanel(wx.Panel):
