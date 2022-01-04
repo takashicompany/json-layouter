@@ -155,11 +155,11 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
         x, y, w, h = props['x'], props['y'], str(props['w']), str(props['h'])
         r, rx, ry = -props['r'], props['rx'], props['ry']
 
-        x_mm = KEY_UNIT_SIZE_MM * x + KEY_OFFSET.get(w, 0)
-        y_mm = KEY_UNIT_SIZE_MM * y + KEY_OFFSET.get(h, 0)
+        x_mm = float(self.params['switch']['unit']) * x + KEY_OFFSET.get(w, 0)
+        y_mm = float(self.params['switch']['unit']) * y + KEY_OFFSET.get(h, 0)
 
-        rx_mm = KEY_UNIT_SIZE_MM * rx - KEY_ORIGIN.get((w, h), (0, 0))[0] + KEY_OFFSET.get(w, 0)
-        ry_mm = KEY_UNIT_SIZE_MM * ry - KEY_ORIGIN.get((w, h), (0, 0))[1] + KEY_OFFSET.get(h, 0)
+        rx_mm = float(self.params['switch']['unit']) * rx - KEY_ORIGIN.get((w, h), (0, 0))[0] + KEY_OFFSET.get(w, 0)
+        ry_mm = float(self.params['switch']['unit']) * ry - KEY_ORIGIN.get((w, h), (0, 0))[1] + KEY_OFFSET.get(h, 0)
         
         # TODO Fix KEY_ORIGIN and KEY_OFFSET
         rx_mm += 2.54
