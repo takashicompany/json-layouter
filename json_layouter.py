@@ -10,6 +10,7 @@ DIODE_REF_PREFIX = 'D'
 KEY_UNIT_SIZE_MM = 19.05
 
 KEY_OFFSET = {
+    '0.84': -1.525,
     '1':  0,  # 12.065
     '1.25':  2.381,  # 14.446
     '1.5':  4.763,  # 16.828
@@ -22,6 +23,7 @@ KEY_OFFSET = {
 
 # Position From Left-Top to Origin(x = 2.54, y = 5.08) 
 KEY_ORIGIN = {
+    ('0.84', '0.84'): (12.065 - 1.525, 4.445 - 1.525),
     ('1', '1'): (12.065, 4.445),
     ('1', '2'): (12.065, 13.97),
     ('1.25', '1'): (14.446, 4.445),
@@ -155,11 +157,13 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
         x, y, w, h = props['x'], props['y'], str(props['w']), str(props['h'])
         r, rx, ry = -props['r'], props['rx'], props['ry']
 
-        x_mm = KEY_UNIT_SIZE_MM * x + KEY_OFFSET.get(w, 0)
-        y_mm = KEY_UNIT_SIZE_MM * y + KEY_OFFSET.get(h, 0)
+        unit = float(self.params['switch']['unit'])
 
-        rx_mm = KEY_UNIT_SIZE_MM * rx - KEY_ORIGIN.get((w, h), (0, 0))[0] + KEY_OFFSET.get(w, 0)
-        ry_mm = KEY_UNIT_SIZE_MM * ry - KEY_ORIGIN.get((w, h), (0, 0))[1] + KEY_OFFSET.get(h, 0)
+        x_mm = unit * x + KEY_OFFSET.get(w, 0)
+        y_mm = unit * y + KEY_OFFSET.get(h, 0)
+
+        rx_mm = unit * rx - KEY_ORIGIN.get((w, h), (0, 0))[0] + KEY_OFFSET.get(w, 0)
+        ry_mm = unit * ry - KEY_ORIGIN.get((w, h), (0, 0))[1] + KEY_OFFSET.get(h, 0)
         
         # TODO Fix KEY_ORIGIN and KEY_OFFSET
         rx_mm += 2.54
