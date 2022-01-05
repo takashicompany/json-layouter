@@ -10,6 +10,7 @@ DIODE_REF_PREFIX = 'D'
 KEY_UNIT_SIZE_MM = 19.05
 
 KEY_OFFSET = {
+    '0.84': -1.525,
     '1':  0,  # 12.065
     '1.25':  2.381,  # 14.446
     '1.5':  4.763,  # 16.828
@@ -22,15 +23,16 @@ KEY_OFFSET = {
 
 # Position From Left-Top to Origin(x = 2.54, y = 5.08) 
 KEY_ORIGIN = {
-    ('1', '1'): (12.065, 4.445),
-    ('1', '2'): (12.065, 13.97),
-    ('1.25', '1'): (14.446, 4.445),
-    ('1.5', '1'): (16.828, 4.445),
-    ('1.75', '1'): (19.209, 4.445),
-    ('2', '1'): (21.590, 4.445),
-    ('2.25', '1'): (23.971, 4.445),
-    ('2.75', '1'): (28.734, 4.445),
-    ('6.25', '1'): (62.071, 4.445),
+    ('1', '1'): (9.525, 9.525),
+    ('1', '2'): (9.525, 19.05),
+    ('1.25', '1'): (11.90625, 9.525),
+    ('1.5', '1'): (14.2875, 9.525),
+    ('1.75', '1'): (16.66875, 9.525),
+    ('2', '1'): (19.05, 9.525),
+    ('2.25', '1'): (21.43125, 9.525),
+    ('2.75', '1'): (26.19375, 9.525),
+    ('6.25', '1'): (59.53125, 9.525),
+    ('0.84', '0.84'): (8, 8),
 }
 
 DEFAULT_PARAMS = {
@@ -155,15 +157,17 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
         x, y, w, h = props['x'], props['y'], str(props['w']), str(props['h'])
         r, rx, ry = -props['r'], props['rx'], props['ry']
 
-        x_mm = float(self.params['switch']['unit']) * x + KEY_OFFSET.get(w, 0)
-        y_mm = float(self.params['switch']['unit']) * y + KEY_OFFSET.get(h, 0)
+        unit = float(self.params['switch']['unit'])
 
-        rx_mm = float(self.params['switch']['unit']) * rx - KEY_ORIGIN.get((w, h), (0, 0))[0] + KEY_OFFSET.get(w, 0)
-        ry_mm = float(self.params['switch']['unit']) * ry - KEY_ORIGIN.get((w, h), (0, 0))[1] + KEY_OFFSET.get(h, 0)
+        x_mm = unit * x + KEY_OFFSET.get(w, 0)
+        y_mm = unit * y + KEY_OFFSET.get(h, 0)
+
+        rx_mm = unit * rx - KEY_ORIGIN.get((w, h), (0, 0))[0] + KEY_OFFSET.get(w, 0)
+        ry_mm = unit * ry - KEY_ORIGIN.get((w, h), (0, 0))[1] + KEY_OFFSET.get(h, 0)
         
         # TODO Fix KEY_ORIGIN and KEY_OFFSET
-        rx_mm += 2.54
-        ry_mm -= 5.08
+        # rx_mm += 2.54
+        # ry_mm -= 5.08
         
         x_mm, y_mm = self.__rotate(r, x_mm, y_mm, rx_mm, ry_mm)
         
