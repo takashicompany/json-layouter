@@ -7,6 +7,7 @@ import traceback
 
 SWITCH_REF_PREFIX = 'SW'
 DIODE_REF_PREFIX = 'D'
+LED_REF_PREFIX = 'LED'
 KEY_UNIT_SIZE_MM = 19.05
 
 KEY_OFFSET = {
@@ -50,6 +51,13 @@ DEFAULT_PARAMS = {
         'offset_y_mm': '0',  # 8.59
         'flip': False,
         'target_diodes': '',
+    },
+    'led': {
+        'move': False,
+        'offset_x_mm': '0',  # -8.6725
+        'offset_y_mm': '0',  # 8.59
+        'flip': False,
+        'target_leds': '',
     },
 }
 
@@ -147,6 +155,10 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
         return '%s%s' % (DIODE_REF_PREFIX, ref_id)
 
     @staticmethod
+    def __led_ref(ref_id):
+        return '%s%s' % (LED_REF_PREFIX, ref_id)
+
+    @staticmethod
     def __rotate(deg, x, y, x0=0, y0=0):
         rad = math.pi * deg / 180.0
         xd = math.cos(rad) * (x - x0) + math.sin(rad) * (y - y0)
@@ -199,8 +211,30 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                     diode.Flip(diode.GetCenter())
                 diode.SetOrientationDegrees(r)
 
+        if self.params['led']['move']:
+            
+            targetStr = self.params['led']['target_leds']
+
+            if len(targetStr) > 0:
+                targets = targetStr.split()
+
+                if str(ref_id) not in targets:
+                    return
+
+            led = self.board.FindModule(self.__led_ref(ref_id))
+            if led is not None:
+                led.SetPosition(pcbnew.wxPointMM(x_mm, y_mm))
+                dx_mm, dy_mm = self.__rotate(r,
+                                             self.params['led']['offset_x_mm'],
+                                             self.params['led']['offset_y_mm'])
+                led.Move(pcbnew.wxPointMM(dx_mm, dy_mm))
+
+                if self.params['led']['flip']:
+                    led.Flip(led.GetCenter())
+                led.SetOrientationDegrees(r)
+
     def __gui(self):
-        WINDOW_SIZE = (600, 350)
+        WINDOW_SIZE = (600, 450)
         MARGIN_PIX = 10
         INDENT_PIX = 20
 
@@ -367,6 +401,88 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                 layout.Add(checkbox_flip, flag=wx.LEFT, border=INDENT_PIX)
                 self.SetSizer(layout)
 
+        class LedPanel(wx.Panel):
+            def __init__(self, parent):
+                def checkbox_move_handler(_):
+                    params['led']['move'] = checkbox_move.GetValue()
+                    if params['led']['move']:
+                        textctrl_offset_x_mm.Enable()
+                        textctrl_offset_y_mm.Enable()
+                        textctrl_target_leds.Enable()
+                        checkbox_flip.Enable()
+                    else:
+                        textctrl_offset_x_mm.Disable()
+                        textctrl_offset_y_mm.Disable()
+                        textctrl_target_leds.Disable()
+                        checkbox_flip.Disable()
+
+                def textctrl_offset_x_mm_handler(_):
+                    params['led']['offset_x_mm'] = textctrl_offset_x_mm.GetValue()
+
+                def textctrl_offset_y_mm_handler(_):
+                    params['led']['offset_y_mm'] = textctrl_offset_y_mm.GetValue()
+
+                def textctrl_target_leds_handler(_):
+                    params['led']['target_leds'] = textctrl_target_leds.GetValue()
+
+                def checkbox_flip_handler(_):
+                    params['led']['flip'] = checkbox_flip.GetValue()
+
+                super(LedPanel, self).__init__(parent, wx.ID_ANY)
+
+                checkbox_move = wx.CheckBox(self, wx.ID_ANY, 'Led')
+                set_initial_checkbox(checkbox_move, True, params['led']['move'])
+                checkbox_move.Bind(wx.EVT_CHECKBOX, checkbox_move_handler)
+
+                panel_offset_x_mm = wx.Panel(self, wx.ID_ANY)
+                text_offset_x_mm = wx.StaticText(panel_offset_x_mm, wx.ID_ANY, 'Offset x[mm]:')
+                textctrl_offset_x_mm = wx.TextCtrl(panel_offset_x_mm, wx.ID_ANY)
+                set_initial_textctrl(textctrl_offset_x_mm,
+                                     params['led']['move'],
+                                     params['led']['offset_x_mm'])
+                textctrl_offset_x_mm.Bind(wx.EVT_TEXT, textctrl_offset_x_mm_handler)
+                layout_offset_x_mm = wx.BoxSizer(wx.HORIZONTAL)
+                layout_offset_x_mm.Add(text_offset_x_mm, flag=wx.ALIGN_CENTER)
+                layout_offset_x_mm.Add(textctrl_offset_x_mm, flag=wx.ALIGN_CENTER | wx.LEFT, border=MARGIN_PIX)
+                panel_offset_x_mm.SetSizer(layout_offset_x_mm)
+
+                panel_offset_y_mm = wx.Panel(self, wx.ID_ANY)
+                text_offset_y_mm = wx.StaticText(panel_offset_y_mm, wx.ID_ANY, 'Offset y[mm]:')
+                textctrl_offset_y_mm = wx.TextCtrl(panel_offset_y_mm, wx.ID_ANY)
+                set_initial_textctrl(textctrl_offset_y_mm,
+                                     params['led']['move'],
+                                     params['led']['offset_y_mm'])
+                textctrl_offset_y_mm.Bind(wx.EVT_TEXT, textctrl_offset_y_mm_handler)
+                layout_offset_y_mm = wx.BoxSizer(wx.HORIZONTAL)
+                layout_offset_y_mm.Add(text_offset_y_mm, flag=wx.ALIGN_CENTER)
+                layout_offset_y_mm.Add(textctrl_offset_y_mm, flag=wx.ALIGN_CENTER | wx.LEFT, border=MARGIN_PIX)
+                panel_offset_y_mm.SetSizer(layout_offset_y_mm)
+
+                # target-leds
+                panel_target_leds = wx.Panel(self, wx.ID_ANY)
+                text_target_leds = wx.StaticText(panel_target_leds, wx.ID_ANY, 'Target leds(separate by space):')
+                textctrl_target_leds = wx.TextCtrl(panel_target_leds, wx.ID_ANY)
+                set_initial_textctrl(textctrl_target_leds,
+                                     params['led']['move'],
+                                     params['led']['target_leds'])
+                textctrl_target_leds.Bind(wx.EVT_TEXT, textctrl_target_leds_handler)
+                layout_target_leds = wx.BoxSizer(wx.HORIZONTAL)
+                layout_target_leds.Add(text_target_leds, flag=wx.ALIGN_CENTER)
+                layout_target_leds.Add(textctrl_target_leds, flag=wx.ALIGN_CENTER | wx.LEFT, border=MARGIN_PIX)
+                panel_target_leds.SetSizer(layout_target_leds)
+
+                checkbox_flip = wx.CheckBox(self, wx.ID_ANY, 'Flip')
+                set_initial_checkbox(checkbox_flip, False, params['led']['move'])
+                checkbox_flip.Bind(wx.EVT_CHECKBOX, checkbox_flip_handler)
+
+                layout = wx.BoxSizer(wx.VERTICAL)
+                layout.Add(checkbox_move)
+                layout.Add(panel_offset_x_mm, flag=wx.LEFT, border=INDENT_PIX)
+                layout.Add(panel_offset_y_mm, flag=wx.LEFT, border=INDENT_PIX)
+                layout.Add(panel_target_leds, flag=wx.LEFT, border=INDENT_PIX)
+                layout.Add(checkbox_flip, flag=wx.LEFT, border=INDENT_PIX)
+                self.SetSizer(layout)
+
         class RunPanel(wx.Panel):
             def __init__(self, parent, callback, top_frame):
                 def button_run_handler(_):
@@ -402,6 +518,9 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                 p['diode']['offset_x_mm'] = float(p['diode']['offset_x_mm'])
                 p['diode']['offset_y_mm'] = float(p['diode']['offset_y_mm'])
                 p['diode']['target_diodes'] = str(p['diode']['target_diodes'])
+                p['led']['offset_x_mm'] = float(p['led']['offset_x_mm'])
+                p['led']['offset_y_mm'] = float(p['led']['offset_y_mm'])
+                p['led']['target_leds'] = str(p['led']['target_leds'])
                 return p
 
             @staticmethod
@@ -423,12 +542,14 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                 file_panel = FilePanel(root_panel)
                 switch_panel = SwitchPanel(root_panel)
                 diode_panel = DiodePanel(root_panel)
+                led_panel = LedPanel(root_panel)
                 run_panel = RunPanel(root_panel, callback, self)
 
                 root_layout = wx.BoxSizer(wx.VERTICAL)
                 root_layout.Add(file_panel, 0, wx.GROW | wx.ALL, border=MARGIN_PIX)
                 root_layout.Add(switch_panel, 0, wx.GROW | wx.ALL, border=MARGIN_PIX)
                 root_layout.Add(diode_panel, 0, wx.GROW | wx.ALL, border=MARGIN_PIX)
+                root_layout.Add(led_panel, 0, wx.GROW | wx.ALL, border=MARGIN_PIX)
                 root_layout.Add(run_panel, 0, wx.GROW | wx.ALL, border=MARGIN_PIX)
 
                 root_panel.SetSizer(root_layout)
