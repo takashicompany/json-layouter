@@ -167,6 +167,15 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
         yd = -math.sin(rad) * (x - x0) + math.cos(rad) * (y - y0)
         return xd + x0, yd + y0
 
+    def __find_module(self, ref):
+        if hasattr(self.board, 'FindModule'):
+            # for v5
+            module = self.__find_module(ref)
+        else:
+            # for v6
+            module = self.board.FindFootprintByReference(ref)
+        return module
+
     def __move_parts(self, ref_id, props):
         x, y, w, h = props['x'], props['y'], str(props['w']), str(props['h'])
         r, rx, ry = -props['r'], props['rx'], props['ry']
@@ -186,7 +195,7 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
         x_mm, y_mm = self.__rotate(r, x_mm, y_mm, rx_mm, ry_mm)
         
         if self.params['switch']['move']:
-            sw = self.board.FindModule(self.__sw_ref(ref_id))
+            sw = self.__find_module(self.__sw_ref(ref_id))
             if sw is not None:
                 sw.SetPosition(pcbnew.wxPointMM(x_mm, y_mm))
                 sw.SetOrientationDegrees(r)
@@ -201,7 +210,8 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                 if str(ref_id) not in targets:
                     return
 
-            diode = self.board.FindModule(self.__diode_ref(ref_id))
+            diode = self.__find_module(self.__diode_ref(ref_id))
+
             if diode is not None:
                 diode.SetPosition(pcbnew.wxPointMM(x_mm, y_mm))
                 dx_mm, dy_mm = self.__rotate(r,
@@ -223,7 +233,7 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
                 if str(ref_id) not in targets:
                     return
 
-            led = self.board.FindModule(self.__led_ref(ref_id))
+            led = self.__find_module(self.__led_ref(ref_id))
             if led is not None:
                 led.SetPosition(pcbnew.wxPointMM(x_mm, y_mm))
                 dx_mm, dy_mm = self.__rotate(r,
