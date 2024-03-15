@@ -197,7 +197,13 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
         if self.params['switch']['move']:
             sw = self.__find_module(self.__sw_ref(ref_id))
             if sw is not None:
-                sw.SetPosition(pcbnew.wxPointMM(x_mm, y_mm))
+                # 修正前: sw.SetPosition(pcbnew.wxPointMM(x_mm, y_mm))
+
+                # 修正後:
+                mm_to_nm = 1000000  # ミリメートルからナノメートルへの変換係数
+                x_nm = int(x_mm * mm_to_nm)  # X座標をナノメートルに変換
+                y_nm = int(y_mm * mm_to_nm)  # Y座標をナノメートルに変換
+                sw.SetPosition(pcbnew.VECTOR2I(x_nm, y_nm))
                 sw.SetOrientationDegrees(r)
 
         if self.params['diode']['move']:
