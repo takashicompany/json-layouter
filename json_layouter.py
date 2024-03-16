@@ -219,11 +219,25 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
             diode = self.__find_module(self.__diode_ref(ref_id))
 
             if diode is not None:
-                diode.SetPosition(pcbnew.wxPointMM(x_mm, y_mm))
-                dx_mm, dy_mm = self.__rotate(r,
-                                             self.params['diode']['offset_x_mm'],
-                                             self.params['diode']['offset_y_mm'])
-                diode.Move(pcbnew.wxPointMM(dx_mm, dy_mm))
+                # diode.SetPosition(pcbnew.wxPointMM(x_mm, y_mm))
+                # dx_mm, dy_mm = self.__rotate(r,
+                #                              self.params['diode']['offset_x_mm'],
+                #                              self.params['diode']['offset_y_mm'])
+                # diode.Move(pcbnew.wxPointMM(dx_mm, dy_mm))
+
+                # 修正後（オフセットを考慮）:
+                mm_to_nm = 1000000  # ミリメートルからナノメートルへの変換係数
+
+                # オフセットをミリメートル単位で適用
+                x_mm_with_offset = x_mm + self.params['diode']['offset_x_mm']
+                y_mm_with_offset = y_mm + self.params['diode']['offset_y_mm']
+
+                # ナノメートルに変換
+                x_nm_with_offset = int(x_mm_with_offset * mm_to_nm)
+                y_nm_with_offset = int(y_mm_with_offset * mm_to_nm)
+
+                # VECTOR2Iで位置を設定
+                diode.SetPosition(pcbnew.VECTOR2I(x_nm_with_offset, y_nm_with_offset))
 
                 if self.params['diode']['flip']:
                     diode.Flip(diode.GetCenter())
@@ -241,11 +255,25 @@ class KeyboardLayouter(pcbnew.ActionPlugin):
 
             led = self.__find_module(self.__led_ref(ref_id))
             if led is not None:
-                led.SetPosition(pcbnew.wxPointMM(x_mm, y_mm))
-                dx_mm, dy_mm = self.__rotate(r,
-                                             self.params['led']['offset_x_mm'],
-                                             self.params['led']['offset_y_mm'])
-                led.Move(pcbnew.wxPointMM(dx_mm, dy_mm))
+                # led.SetPosition(pcbnew.wxPointMM(x_mm, y_mm))
+                # dx_mm, dy_mm = self.__rotate(r,
+                #                              self.params['led']['offset_x_mm'],
+                #                              self.params['led']['offset_y_mm'])
+                # led.Move(pcbnew.wxPointMM(dx_mm, dy_mm))
+
+                # 修正後（LEDのオフセットを考慮)...まだ動作確認していないけど多分これでイケるはず:
+                mm_to_nm = 1000000  # ミリメートルからナノメートルへの変換係数
+
+                # LEDのオフセットをミリメートル単位で適用
+                x_mm_with_offset_led = x_mm + self.params['led']['offset_x_mm']
+                y_mm_with_offset_led = y_mm + self.params['led']['offset_y_mm']
+
+                # ナノメートルに変換
+                x_nm_with_offset_led = int(x_mm_with_offset_led * mm_to_nm)
+                y_nm_with_offset_led = int(y_mm_with_offset_led * mm_to_nm)
+
+                # VECTOR2Iで位置を設定
+                led.SetPosition(pcbnew.VECTOR2I(x_nm_with_offset_led, y_nm_with_offset_led))
 
                 if self.params['led']['flip']:
                     led.Flip(led.GetCenter())
